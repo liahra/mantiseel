@@ -11,6 +11,32 @@ class Storage {
         };
     }
 
+    async getUser(username){
+        const client = new pg.Client(this.credentials);
+
+        try {
+            await client.connect();
+
+            const query = {
+                text: 'SELECT * FROM public.users WHERE username = $1',
+                values: [username]
+            }
+
+            try {
+
+                let response = await client.query(query);
+                return response.rows[0];
+
+            } catch (err){
+                console.log(`Failed to retrieve user: ${err}`);
+            }
+
+        } catch (err){
+            console.log(`Get user connection failed: ${err}`);
+        }
+
+    }
+
     async addUser(username, password){
         const client = new pg.Client(this.credentials);
 
@@ -37,6 +63,7 @@ class Storage {
                     try {
 
                         let result = await client.query(query2);
+                        client.end();
                         return {msg: 'User added.'};
 
                     } catch (err){
@@ -45,17 +72,20 @@ class Storage {
 
 
                 } else {
+                    client.end();
                     return {msg: 'User already exists'}
                 }
                 
 
             } catch (err){
                 console.log(`Locating user failed: ${err}`);
+
             }
 
         } catch(err){
             
             console.log(`User creation, connection error: ${err}`);
+        
         }
 
         

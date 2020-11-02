@@ -6,42 +6,56 @@
     <title>Login</title>
 </head>
 <body>
+
     <div id="container">
-        <h1>Create User</h1>
+        <h1>Login</h1>
         <label for="username">Username: </label>
         <input id="username" type="text" />
         <br>
-        <label for="password">Password</label>
-        <input id="password" type="password" />
-        <br>
-        <br>
+        <label for="password">Password: </label>
+        <input id="password" type="text" />
+        <br><br>
         <button id="login">Login</button>
     </div>
+    
 </body>
-
 <script>
     let username = document.getElementById('username');
     let password = document.getElementById('password');
     let login = document.getElementById('login');
 
     login.addEventListener('click', async ()=>{
-        const url = '/api/makeUser';
+        const url = '/api/login';
+
+        let authString = window.btoa(`${username.value}:${password.value}`);
+        let auth = 'Basic '+authString;
+
+        if(username.value.length != 0 && password.value.length != 0){
+            headers = {
+                'content-type': 'application/json',
+                'authorization': auth
+            }
+        } else {
+            headers = {
+                'content-type': 'application/json'
+            }
+        }
+
         const config = {
             method: 'post',
             body: JSON.stringify({
                 username: username.value,
                 password: password.value
             }),
-            headers: {
-                'content-type': 'application/json'
-            }
+            headers: headers
         }
 
         let response = await fetch(url, config);
-        let message = await response.json();
-        console.log(message.msg);
+        if(response.status === 200){
+            location.href = 'random.html';
+        }
 
-        
     });
+
 </script>
 </html>
