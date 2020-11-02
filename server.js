@@ -33,9 +33,9 @@ const authenticator = async (req, res, next) => {
         
         //If password OK - login = ok
         if(encrypt.comparePasswords(encrypt.encryptPassword(password), passwordFromDB)){
-            res.status(200).end();
+            res.status(200);
         } else {
-            res.status(403).end();
+            res.status(403);
         }
 
         //Else respond 403
