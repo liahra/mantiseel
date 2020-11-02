@@ -1,9 +1,16 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const server = express();
+const storage = require('./modules/storage');
+const encrypt = require('./modules/cryptCompare');
+
+const server = express(); 
 
 server.use(bodyParser.json());
 server.use(express.static('public'));
+
+const credentials = require('./localenv').DATABASE_URL || process.env.DATABASE_URL;
+const secret = require('./localenv').HASH_SECRET || process.env.HASH_SECRET;
+const db = new storage(credentials);
 
 server.post('/api/makePresentation', async (req, res) => {
  
@@ -43,8 +50,18 @@ server.post('/api/updateSlide', async (req, res) => {
 
 server.post('/api/makeUser', async (req, res) => {
  
+    let username = req.body.username;
+    let password = req.body.password;
 
-    res.status(200).json(response).end();
+    //Hash password
+    password = encrypt.encryptPassword(password);
+
+    //Send info to database
+    let result = await db.addUser(username, password);
+    
+    res.status(200).json(result).end();
+
+    //res.status(200).json(response).end();
 });
 
 server.post('/api/deleteUser', async (req, res) => {
