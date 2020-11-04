@@ -45,7 +45,7 @@
                 'authorization': auth
             }
 
-            let url = '/api/login';
+            let url = '/logins/login';
 
             let config = {
                 method: 'post',
@@ -66,7 +66,7 @@
     });
 
     async function loginSuccess(headers){
-        let url = '/random';
+        let url = '/logins/random';
         let config = {
             method: 'get',
             headers: headers
