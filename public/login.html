@@ -6,7 +6,7 @@
     <title>Login</title>
 </head>
 <body>
-
+    
     <div id="container">
         <h1>Login</h1>
         <label for="username">Username: </label>
@@ -17,42 +17,48 @@
         <br><br>
         <button id="login">Login</button>
     </div>
+    <br><br>
+    <button id="logout">Log out</button>
     
 </body>
 <script>
+    let logout = document.getElementById('logout');
+    logout.addEventListener('click',async ()=>{
+        let response = await fetch('/logout');
+        console.log(response);
+    });
+
+
     let username = document.getElementById('username');
     let password = document.getElementById('password');
     let login = document.getElementById('login');
 
     login.addEventListener('click', async ()=>{
-        const url = '/api/login';
 
-        let authString = window.btoa(`${username.value}:${password.value}`);
-        let auth = 'Basic '+authString;
-
-        if(username.value.length != 0 && password.value.length != 0){
-            headers = {
+        if(username.value.length != 0 || password.value.length != 0){
+            console.log('Username and password OK');
+            let authString = window.btoa(`${username.value}:${password.value}`);
+            let auth = 'Basic '+authString;
+            
+            let headers = {
                 'content-type': 'application/json',
                 'authorization': auth
             }
-        } else {
-            headers = {
-                'content-type': 'application/json'
+
+            const url = '/api/login';
+
+            const config = {
+                method: 'post',
+                headers: headers
             }
-        }
 
-        const config = {
-            method: 'post',
-            body: JSON.stringify({
-                username: username.value,
-                password: password.value
-            }),
-            headers: headers
-        }
-
-        let response = await fetch(url, config);
-        if(response.status === 200){
-            location.href = 'random.html';
+            let response = await fetch(url, config);
+            if(response.status === 200){
+                location.href = 'random';
+            }
+        } else {
+            console.log('Enter username and password');
+            return;
         }
 
     });
