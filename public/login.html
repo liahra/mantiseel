@@ -45,23 +45,38 @@
                 'authorization': auth
             }
 
-            const url = '/api/login';
+            let url = '/api/login';
 
-            const config = {
+            let config = {
                 method: 'post',
                 headers: headers
             }
 
             let response = await fetch(url, config);
+            
+            
             if(response.status === 200){
-                location.href = 'random';
+                loginSuccess(headers);
+                //location.replace('/random');
             }
         } else {
             console.log('Enter username and password');
-            return;
         }
 
     });
+
+    async function loginSuccess(headers){
+        let url = '/random';
+        let config = {
+            method: 'get',
+            headers: headers
+        }
+
+        let response = await fetch(url, config);
+        //console.log(response);
+        location.replace(response.url);
+
+    }
 
 </script>
 </html>

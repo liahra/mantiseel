@@ -17,10 +17,10 @@ const db = new storage(credentials);
 const authenticator = async (req, res, next) => {
     console.log('Authenticating....');
     //If no authorization header:
+    
     if(!req.headers.authorization || req.headers.authorization.indexOf('Basic ') === -1){
         return res.append("WWW-Authenticate", 'Basic realm="User Visible Realm", charset="UTF-8"').status(401).end();
     } else {
-        //GET THIS INFO FROM HEADER!
         const credentials = req.headers.authorization.split(' ')[1];
         const [username, password] = Buffer.from(credentials, 'base64').toString('UTF-8').split(":");
 
@@ -28,20 +28,24 @@ const authenticator = async (req, res, next) => {
         let user, passwordFromDB;
         if(username){
             user = await db.getUser(username);
-            passwordFromDB = user.password;
+            if(user){
+                passwordFromDB = user.password;
+            } else {
+                console.log('User does not exist');
+                return;
+            }
+            
         }
         
         //If password OK - login = ok
         if(encrypt.comparePasswords(encrypt.encryptPassword(password), passwordFromDB)){
-            res.send('ok');
+            req.login = true;
+            next();
         } else {
-            //res.status(403);
-            res.send('no');
+           req.login = false;
+           next();
         }
     }
-
-    
-    next();
 }
 
 /* ****************************************** */
@@ -121,19 +125,21 @@ server.post('/api/sharePresentation', async (req, res) => {
 });
 
 /* ALL ENDPOINTS THAT REQUIRE AUTHENTICATION */
-server.use(authenticator);
+//server.use(authenticator);
 
 //post eller get?
-server.post('/api/login', async (req, res) => {
-    console.log(res);
-    //res.status(200).end();
+server.post('/api/login', authenticator, async (req, res) => {
+    if(req.login){
+        res.status(200).end();
+    } else {
+        res.status(403).end();
+    }
+    
     //res.status(200).json(response).end();
 });
 
-server.get('/random', async (req, res)=>{
-    console.log('Random 1');
+server.get('/random', authenticator, async (req, res)=>{
     res.sendFile(__dirname + '/logins/random.html');
-    console.log('Random 2');
 });
 
 server.set('port', (process.env.PORT || 8080));
