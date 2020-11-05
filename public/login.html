@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    
+    <div id="container">
+        <h1>Login</h1>
+        <label for="username">Username: </label>
+        <input id="username" type="text" />
+        <br>
+        <label for="password">Password: </label>
+        <input id="password" type="password" />
+        <br><br>
+        <button id="login">Login</button>
+    </div>
+        
+</body>
+<script>
+
+
+    let username = document.getElementById('username');
+    let password = document.getElementById('password');
+    let login = document.getElementById('login');
+
+    let headers = {};
+
+    login.addEventListener('click', async ()=>{
+
+        if(username.value.length != 0 || password.value.length != 0){
+            console.log('Username and password OK');
+            let authString = window.btoa(`${username.value}:${password.value}`);
+            let auth = 'Basic '+authString;
+            
+            headers = {
+                'content-type': 'application/json',
+                'authorization': auth
+            }
+
+            let url = '/api/login';
+
+            let config = {
+                method: 'get',
+                headers: headers
+            }
+
+            let response = await fetch(url, config);
+            let data = await response.json();
+            if(response.status === 200){
+                console.log('Login successful');
+                sessionStorage.setItem('SID',data);
+                location.href="/random.html";
+
+                
+            }
+        } else {
+            console.log('Enter username and password');
+        }
+
+    });
+
+</script>
+</html>
