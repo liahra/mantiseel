@@ -48,10 +48,13 @@
             }
 
             let response = await fetch(url, config);
-            console.log(response);
+            let data = await response.json();
             if(response.status === 200){
                 console.log('Login successful');
-                //location.replace('/random');
+                sessionStorage.setItem('SID',data);
+                location.href="/random.html";
+
+                
             }
         } else {
             console.log('Enter username and password');

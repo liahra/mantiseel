@@ -1,46 +1,62 @@
 const tokenSecret = require('../localenv').TOKEN_SECRET;
 const crypto = require('crypto');
+const { nextTick } = require('process');
 
 
 function generateToken(payload){
-    console.log(tokenSecret);
-
     //Header
     const header = {
-        'alg': 'H256',
+        'alg': 'HS256',
         'typ': 'jwt'
     }
 
     const headerBUF = Buffer.from(JSON.stringify(header), 'utf-8');
-    const headerENC = removePadding(headerBUF.toString('base64'));
-    console.log(headerENC);
+    const headerENC = urlEncode(headerBUF.toString('base64'));
     
     //Payload
     const payloadBUF = Buffer.from(JSON.stringify(payload), 'utf-8');
-    const payloadENC = removePadding(payloadBUF.toString('base64'));
-    console.log(payloadENC);
+    const payloadENC = urlEncode(payloadBUF.toString('base64'));
 
     //Signature
     const signString = headerENC+"."+payloadENC;
 
-    const sign = removePadding(crypto.createHmac('sha256', tokenSecret)
-    .update(signString, 'base64')
-    .digest('base64'));
-    console.log(sign);
+    const sign = signToken(signString);
 
     //Finished token
     const token = headerENC+"."+payloadENC+"."+sign;
-    console.log(token);
+    return token;
+}
 
+function validateToken(token){
+    //Step 1: Split token at .
+    let [header, payload, sign] = token.split('.');
+    
+    //Create signature
+    const signString = header+"."+payload;
+    const mySignature = signToken(signString);
+
+    //Check if mySignature matches the signature from the received token
+    return mySignature === sign;
+
+    
+}
+
+function signToken(signString){
+    return urlEncode(crypto.createHmac('sha256', tokenSecret)
+    .update(signString, 'base64')
+    .digest('base64'));
 }
 
 //Actually a base64url encoder
 // https://base64.guru/standards/base64url
-function removePadding(encodedString){
+function urlEncode(encodedString){
     let urlEncoded = encodedString.replace(/\//g,'_');
     urlEncoded = urlEncoded.replace(/=/g,'');
     urlEncoded = urlEncoded.replace(/\+/g,'-');
     return urlEncoded;
 }
 
-module.exports = {generateToken};
+module.exports = {
+    generateToken, 
+    validateToken
+};

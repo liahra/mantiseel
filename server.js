@@ -1,9 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const path = require('path');
 const storage = require('./modules/storage');
 const encrypt = require('./modules/cryptCompare');
 const server = express();
-const token = require('./modules/jwt'); 
+const jwt = require('./modules/jwt'); 
+
 
 server.use(bodyParser.json());
 server.use(express.static('public'));
@@ -14,6 +16,7 @@ const db = new storage(credentials);
 
 /* **************** MIDDLEWARE ************************** */
 const authenticator = async (req, res, next) => {
+    //Basic http authentication for login
     console.log('Authenticating....');
     
     //If no authorization header:
@@ -38,18 +41,39 @@ const authenticator = async (req, res, next) => {
     
     //If password OK - login = ok
     if(encrypt.comparePasswords(encrypt.encryptPassword(password), passwordFromDB)){
+        req.user = user;
         req.login = true;
         next();
     } else {
         req.login = false;
         next();
+    } 
+}
+
+const authorizer = async (req, res, next) => {
+    //If no authorization header:
+    console.log('Authorizing....');
+    if(!req.headers.authorization || req.headers.authorization.indexOf('Bearer ') === -1){
+        return res.append("WWW-Authenticate", 'Bearer realm="User Visible Realm", charset="UTF-8"').status(401).end();
     }
-    
+
+    //Verify token
+    let token = req.headers.authorization.split(' ')[1];
+    let valid = jwt.validateToken(token);
+
+    //If validation => next()
+    if(valid){
+        console.log('Authorized');
+        next();
+    } else {
+        console.log('Unauthorized');
+        res.status(401).end();
+    }
 }
 
 /* ****************************************** */
-server.get('/test', (req, res)=>{
-    token.generateToken({'payload': 'Hello World'});
+server.get('/access', authorizer, (req, res)=>{
+    res.status(200).end();
 });
 
 server.post('/api/makePresentation', async (req, res) => {
@@ -122,20 +146,22 @@ server.post('/api/sharePresentation', async (req, res) => {
     res.status(200).json(response).end();
 });
 
+/* PRIVATE PAGES */
+server.get('/random', authorizer, (req, res, next)=>{
+    console.log('Welcome to random');
+});
+
 /* ALL ENDPOINTS THAT REQUIRE AUTHENTICATION */
 
 //post eller get?
 server.get('/api/login', authenticator, async (req, res) => {
     if(req.login){
-
-        //Hvis login er suksessfull her, så genererer vi et jwt som vi sender med i responsen   
-
-        res.status(200).end();
+        //If login successful - generate token to send along
+        let token = jwt.generateToken({'payload': 'Hello World'});
+        res.status(200).json(token);
     } else {
         res.status(403).end();
-    }
-    
-    //res.status(200).json(response).end();
+    }    
 });
 
 
