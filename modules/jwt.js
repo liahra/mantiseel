@@ -34,6 +34,8 @@ function generateToken(payload){
 
 }
 
+//Actually a base64url encoder
+// https://base64.guru/standards/base64url
 function removePadding(encodedString){
     let urlEncoded = encodedString.replace(/\//g,'_');
     urlEncoded = urlEncoded.replace(/=/g,'');
