@@ -9,27 +9,11 @@
 <body>
     
     <div id="container"><h1>Welcome</h1></div>
-    <br><br>
-    <button id="logout">Log out</button>
+    
     
 </body>
 <script>
-    let logout = document.getElementById('logout');
-    logout.addEventListener('click',async ()=>{
-        const url = '/logout';
-        const config = {
-            method: 'post',
-            headers: {
-                'content-type': 'application/json',
-                'authorization': ''
-            }
-        }
-        let response = await fetch('/logout', config);
-        console.log(response);
-        if(response.status === 403){
-            location.href= 'index.html';
-        }
-    });
+    
 
     let container = document.getElementById('container');
 

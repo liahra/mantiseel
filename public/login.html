@@ -17,21 +17,16 @@
         <br><br>
         <button id="login">Login</button>
     </div>
-    <br><br>
-    <button id="logout">Log out</button>
-    
+        
 </body>
 <script>
-    let logout = document.getElementById('logout');
-    logout.addEventListener('click',async ()=>{
-        let response = await fetch('/logout');
-        console.log(response);
-    });
 
 
     let username = document.getElementById('username');
     let password = document.getElementById('password');
     let login = document.getElementById('login');
+
+    let headers = {};
 
     login.addEventListener('click', async ()=>{
 
@@ -40,23 +35,22 @@
             let authString = window.btoa(`${username.value}:${password.value}`);
             let auth = 'Basic '+authString;
             
-            let headers = {
+            headers = {
                 'content-type': 'application/json',
                 'authorization': auth
             }
 
-            let url = '/logins/login';
+            let url = '/api/login';
 
             let config = {
-                method: 'post',
+                method: 'get',
                 headers: headers
             }
 
             let response = await fetch(url, config);
-            
-            
+            console.log(response);
             if(response.status === 200){
-                loginSuccess(headers);
+                console.log('Login successful');
                 //location.replace('/random');
             }
         } else {
@@ -64,19 +58,6 @@
         }
 
     });
-
-    async function loginSuccess(headers){
-        let url = '/logins/random';
-        let config = {
-            method: 'get',
-            headers: headers
-        }
-
-        let response = await fetch(url, config);
-        //console.log(response);
-        location.replace(response.url);
-
-    }
 
 </script>
 </html>

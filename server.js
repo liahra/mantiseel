@@ -1,9 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const storage = require('./modules/storage');
-
-
-const server = express(); 
+const encrypt = require('./modules/cryptCompare');
+const server = express();
+const token = require('./modules/jwt'); 
 
 server.use(bodyParser.json());
 server.use(express.static('public'));
@@ -12,14 +12,44 @@ const credentials = require('./localenv').DATABASE_URL || process.env.DATABASE_U
 const secret = require('./localenv').HASH_SECRET || process.env.HASH_SECRET;
 const db = new storage(credentials);
 
-const logins = require('./modules/logins');
+/* **************** MIDDLEWARE ************************** */
+const authenticator = async (req, res, next) => {
+    console.log('Authenticating....');
+    
+    //If no authorization header:
+    if(!req.headers.authorization || req.headers.authorization.indexOf('Basic ') === -1){
+        return res.append("WWW-Authenticate", 'Basic realm="User Visible Realm", charset="UTF-8"').status(401).end();
+    }
 
-server.use('/logins', logins)
+    const credentials = req.headers.authorization.split(' ')[1];
+    const [username, password] = Buffer.from(credentials, 'base64').toString('UTF-8').split(":");
+
+    //Retrieve username and password from database
+    let user, passwordFromDB;
+    if(username){
+        user = await db.getUser(username);
+        if(user){
+            passwordFromDB = user.password;
+        } else {
+            console.log('User does not exist');
+            return;
+        }  
+    }
+    
+    //If password OK - login = ok
+    if(encrypt.comparePasswords(encrypt.encryptPassword(password), passwordFromDB)){
+        req.login = true;
+        next();
+    } else {
+        req.login = false;
+        next();
+    }
+    
+}
 
 /* ****************************************** */
-server.post('/logout', async(req, res)=>{
-    console.log(req.headers);
-    res.status(403).end();
+server.get('/test', (req, res)=>{
+    token.generateToken({'payload': 'Hello World'});
 });
 
 server.post('/api/makePresentation', async (req, res) => {
@@ -93,11 +123,13 @@ server.post('/api/sharePresentation', async (req, res) => {
 });
 
 /* ALL ENDPOINTS THAT REQUIRE AUTHENTICATION */
-//server.use(authenticator);
 
 //post eller get?
-server.post('/api/login', async (req, res) => {
+server.get('/api/login', authenticator, async (req, res) => {
     if(req.login){
+
+        //Hvis login er suksessfull her, så genererer vi et jwt som vi sender med i responsen   
+
         res.status(200).end();
     } else {
         res.status(403).end();
